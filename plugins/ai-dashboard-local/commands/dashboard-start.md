@@ -6,10 +6,24 @@ allowed-tools: [Bash]
 
 Start the local AI Dashboard runtime for this project.
 
-Steps:
-1. If on macOS, run `zsh ./start-dashboard.command`.
-2. If on Windows, run `start-dashboard.bat`.
-3. Verify port `8765` is listening.
-4. Open: `http://127.0.0.1:8765/ai-dashboard.refactor.html?config=dashboard-config.local.json&lang=ko`
+Required behavior:
+1. Resolve `lang` (`ko` default, `en` optional).
+2. Detect OS and shell:
+   - macOS/Linux: prefer `zsh ./start-dashboard.command`, fallback to `bash ./start-dashboard.command` if `zsh` is unavailable.
+   - Windows: run `start-dashboard.bat`.
+3. Verify runtime health:
+   - Port `8765` is listening.
+   - `GET /ai-dashboard.refactor.html?...` returns HTTP `200`.
+4. Output one standard result block:
+   - `status`: started | already_running | failed
+   - `pid`: process id (if available)
+   - `url`: exact URL with lang/config query
+   - `log`: log file path
+   - `next_action`: exact next command when failed
 
-If user passed `lang=en`, replace the query `lang=ko` with `lang=en`.
+Connection/VM handling:
+- If `ERR_CONNECTION_REFUSED`, automatically attempt one restart and re-check health.
+- If running in VM/container/remote shell, clearly warn that `127.0.0.1` may not map to the user's host browser and provide an actionable host-side step.
+
+Safety line (always include):
+- `Filesystem paths were not moved. Only dashboard runtime/config state was touched.`

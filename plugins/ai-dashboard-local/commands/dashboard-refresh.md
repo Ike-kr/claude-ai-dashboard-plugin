@@ -12,4 +12,10 @@ Steps:
 3. Restart local server with platform launcher.
 4. Re-open dashboard URL and confirm icons loaded.
 
-Do not move filesystem paths. Only update config JSON.
+Required output:
+- number of icons regenerated
+- restart result (`started` or `already_running`)
+- verification result (HTTP `200` or failure reason)
+
+Safety line (always include):
+- `Do not move filesystem paths. Only update dashboard-config.local.json and runtime state.`

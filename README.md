@@ -86,6 +86,11 @@ start-dashboard.bat
   - Windows: `os.startfile`
   - Linux: `xdg-open`
 - Path tokens support `$HOME`, `{HOME}`, `~` with `/` and `\\` separators.
+- If Claude runs inside VM/container, `127.0.0.1` may not be your host browser localhost. In that case, run start command on host shell.
+
+## Safety guarantee
+- This plugin does not move or rename your real filesystem paths.
+- It only updates dashboard runtime state and `dashboard-config.local.json`.
 
 ## Release
 - Current tag: `v0.1.0`
