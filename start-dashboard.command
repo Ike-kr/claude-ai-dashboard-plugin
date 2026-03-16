@@ -2,6 +2,9 @@
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR" || exit 1
 PORT=8765
+if command -v node >/dev/null 2>&1; then
+  node "$DIR/scripts/generate-config.mjs" "$DIR/dashboard-config.local.json" >/tmp/ai-dashboard-refresh.log 2>&1 || true
+fi
 pkill -f "local_dashboard_server.py $PORT" >/dev/null 2>&1
 pkill -f "http.server $PORT" >/dev/null 2>&1
 nohup python3 "$DIR/scripts/local_dashboard_server.py" "$PORT" </dev/null >/tmp/ai-dashboard-server.log 2>&1 &

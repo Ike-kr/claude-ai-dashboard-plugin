@@ -624,6 +624,7 @@ function renderDesktopIcons(iconList){
     }
     var a=document.createElement('a');
     a.className='di';
+    a.dataset.pathraw=item.path||item.href||'';
     a.href=resolveHref(item.path||item.href);
     a.dataset.n=item.label||item.name||'';
     a.dataset.c=category;
@@ -744,8 +745,16 @@ function compactVisibleIconsLeft(){
 
 function restorePositionsAfterFilter(){
   var pos=savedPositionsBeforeFilter;
-  if(!pos||!pos.length)pos=loadPositions();
-  if(pos&&pos.length===allIcons.length){
+  if(!pos||(!pos.length&&!pos.byKey))pos=loadPositions();
+  if(pos&&pos.byKey){
+    allIcons.forEach(function(el){el.style.transition='left .24s ease,top .24s ease';});
+    applyPositions(pos,false);
+    ensureAllIconsPositioned();
+    setTimeout(function(){
+      allIcons.forEach(function(el){el.style.transition=''});
+    },260);
+    savePositions();
+  } else if(pos&&pos.length===allIcons.length){
     allIcons.forEach(function(el,i){
       if(!pos[i])return;
       el.style.transition='left .24s ease,top .24s ease';
@@ -1063,6 +1072,45 @@ function defaultPositions(){
   return positions;
 }
 
+function getElementStableKey(el, idx){
+  var raw=String((el&&el.dataset&&el.dataset.pathraw)||'').trim();
+  if(raw)return 'p:'+normalizeRootPath(raw);
+  var href=String((el&&el.getAttribute&&el.getAttribute('href'))||'').trim();
+  if(href)return 'h:'+normalizeRootPath(href);
+  return 'i:'+String(idx||0);
+}
+
+function ensureAllIconsPositioned(){
+  var g=calcGrid();
+  var occupied={};
+  allIcons.forEach(function(el){
+    var x=parseInt(el.style.left,10), y=parseInt(el.style.top,10);
+    if(!isNaN(x)&&!isNaN(y)){
+      occupied[Math.round((x-PAD_X)/GRID_W)+','+Math.round((y-PAD_Y)/GRID_H)]=true;
+    }
+  });
+  function findEmpty(){
+    for(var c=0;c<g.cols;c++){
+      for(var r=0;r<g.rows;r++){
+        var k=c+','+r;
+        if(!occupied[k]){
+          occupied[k]=true;
+          return {x:PAD_X+c*GRID_W,y:PAD_Y+r*GRID_H};
+        }
+      }
+    }
+    return {x:PAD_X,y:PAD_Y};
+  }
+  allIcons.forEach(function(el){
+    var x=parseInt(el.style.left,10), y=parseInt(el.style.top,10);
+    if(isNaN(x)||isNaN(y)){
+      var p=findEmpty();
+      el.style.left=p.x+'px';
+      el.style.top=p.y+'px';
+    }
+  });
+}
+
 function snapToGrid(x,y){
   var g=calcGrid();
   var col=Math.round((x-PAD_X)/GRID_W);
@@ -1077,10 +1125,40 @@ function loadPositions(){
   return null;
 }
 function savePositions(pos){
-  storageSet(STORAGE_KEY,JSON.stringify(pos));
+  var out={v:2,byKey:{}};
+  if(pos&&pos.byKey&&typeof pos.byKey==='object'){
+    out=pos;
+  } else if(Array.isArray(pos)){
+    allIcons.forEach(function(el,i){
+      if(!pos[i])return;
+      var k=getElementStableKey(el,i);
+      out.byKey[k]={x:pos[i].x,y:pos[i].y};
+    });
+  } else {
+    allIcons.forEach(function(el,i){
+      var k=getElementStableKey(el,i);
+      out.byKey[k]={x:parseInt(el.style.left)||0,y:parseInt(el.style.top)||0};
+    });
+  }
+  storageSet(STORAGE_KEY,JSON.stringify(out));
 }
 
 function applyPositions(pos,animate){
+  if(pos&&pos.byKey&&typeof pos.byKey==='object'){
+    allIcons.forEach(function(el,i){
+      var k=getElementStableKey(el,i);
+      var p=pos.byKey[k];
+      if(!p)return;
+      el.style.left=p.x+'px';
+      el.style.top=p.y+'px';
+      if(animate){
+        el.classList.add('entering');
+        el.style.animationDelay=(i*.025)+'s';
+        setTimeout(function(){el.classList.remove('entering')},600);
+      }
+    });
+    return;
+  }
   allIcons.forEach(function(el,i){
     if(pos[i]){
       el.style.left=pos[i].x+'px';
@@ -1167,7 +1245,11 @@ setTimeout(function(){
     document.getElementById('dw').style.opacity='1';
     // Apply positions
     var saved=loadPositions();
-    if(saved && saved.length===allIcons.length){
+    if(saved && saved.byKey){
+      applyPositions(saved,true);
+      ensureAllIconsPositioned();
+      savePositions();
+    } else if(saved && saved.length===allIcons.length){
       applyPositions(saved,true);
     } else {
       var pos=defaultPositions();

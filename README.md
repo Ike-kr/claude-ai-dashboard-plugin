@@ -71,6 +71,8 @@ Windows:
 start-dashboard.bat
 ```
 
+`start-dashboard` launchers auto-refresh `dashboard-config.local.json` before starting server (if Node is available).
+
 ## Project structure
 - `.claude-plugin/marketplace.json`
 - `plugins/ai-dashboard-local/.claude-plugin/plugin.json`

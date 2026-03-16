@@ -11,10 +11,11 @@ Required behavior:
 2. Detect OS and shell:
    - macOS/Linux: prefer `zsh ./start-dashboard.command`, fallback to `bash ./start-dashboard.command` if `zsh` is unavailable.
    - Windows: run `start-dashboard.bat`.
-3. Verify runtime health:
+3. Before launch, auto-refresh icon config from roots (`dashboard-config.local.json`) when Node is available.
+4. Verify runtime health:
    - Port `8765` is listening.
    - `GET /ai-dashboard.refactor.html?...` returns HTTP `200`.
-4. Output one standard result block:
+5. Output one standard result block:
    - `status`: started | already_running | failed
    - `pid`: process id (if available)
    - `url`: exact URL with lang/config query

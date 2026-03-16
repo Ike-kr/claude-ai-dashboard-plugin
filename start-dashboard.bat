@@ -3,6 +3,10 @@ setlocal
 set "DIR=%~dp0"
 cd /d "%DIR%"
 set "PORT=8765"
+where node >nul 2>nul
+if %ERRORLEVEL% EQU 0 (
+  node "%DIR%scripts\\generate-config.mjs" "%DIR%dashboard-config.local.json" > "%TEMP%\\ai-dashboard-refresh.log" 2>&1
+)
 
 netstat -ano | findstr /R /C:":%PORT% .*LISTENING" >nul
 if %ERRORLEVEL% EQU 0 (
