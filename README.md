@@ -1,6 +1,6 @@
 # AI Dashboard Local Plugin Marketplace
 
-![version](https://img.shields.io/badge/version-v0.1.0-blue)
+![version](https://img.shields.io/badge/version-v0.1.3-blue)
 ![platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-green)
 ![claude](https://img.shields.io/badge/Claude%20Code-Plugin-purple)
 
@@ -25,7 +25,7 @@ Claude Code plugin marketplace for a cross-platform local AI dashboard workflow.
 ## Install
 ### From GitHub marketplace repo
 ```bash
-claude plugin marketplace add https://github.com/hsyj20170401-dotcom/claude-ai-dashboard-plugin
+claude plugin marketplace add https://github.com/Ike-kr/claude-ai-dashboard-plugin
 claude plugin install ai-dashboard-local@ike-ai-dashboard-marketplace
 ```
 
@@ -95,7 +95,7 @@ start-dashboard.bat
 - It only updates dashboard runtime state and `dashboard-config.local.json`.
 
 ## Release
-- Current tag: `v0.1.0`
-- Release title: `v0.1.0 - Initial public marketplace release`
+- Current tag: `v0.1.3`
+- Release title: `v0.1.3 - Version alignment for Claude in-app update`
 
 See publish checklist: [`PUBLISH.md`](./PUBLISH.md)

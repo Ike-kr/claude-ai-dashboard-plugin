@@ -11,7 +11,7 @@ Keep this structure:
 ## 2) Add marketplace from repo URL
 
 ```bash
-claude plugin marketplace add https://github.com/hsyj20170401-dotcom/claude-ai-dashboard-plugin
+claude plugin marketplace add https://github.com/Ike-kr/claude-ai-dashboard-plugin
 ```
 
 ## 3) Install plugin
@@ -32,8 +32,8 @@ Expected plugin id:
 ## 5) Update flow
 
 1. Bump version in both files:
-- `.claude-plugin/plugin.json`
-- `plugins/ai-dashboard-local/.claude-plugin/plugin.json`
+- `.claude-plugin/marketplace.json` (`plugins[0].version`)
+- `plugins/ai-dashboard-local/.claude-plugin/plugin.json` (`version`)
 
 2. Push commit/tag
 3. Users run:
