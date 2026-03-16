@@ -382,6 +382,7 @@ body.wp-nordic{background:linear-gradient(180deg,#1a1b2e 0%,#2e3047 30%,#4a5568 
 <!-- Icon Context Menu -->
 <div class="icon-ctx" id="iconCtx">
   <div class="icon-ctx-i" id="iconCtxOpen">📂 Open</div>
+  <div class="icon-ctx-i" id="iconCtxCopyPath">📋 Copy Path</div>
   <div class="icon-ctx-s"></div>
   <div class="icon-ctx-i danger" id="iconCtxDelete">🗑️ Delete</div>
 </div>
@@ -390,6 +391,7 @@ body.wp-nordic{background:linear-gradient(180deg,#1a1b2e 0%,#2e3047 30%,#4a5568 
 <div class="icon-ctx" id="folderCtx">
   <div class="icon-ctx-i" id="folderCtxOpen">📂 Open Folder</div>
   <div class="icon-ctx-i" id="folderCtxRename">✏️ Rename</div>
+  <div class="icon-ctx-i" id="folderCtxCopyPath">📋 Copy Path</div>
   <div class="icon-ctx-s"></div>
   <div class="icon-ctx-i danger" id="folderCtxDelete">🗑️ Delete Folder</div>
 </div>
@@ -409,6 +411,7 @@ body.wp-nordic{background:linear-gradient(180deg,#1a1b2e 0%,#2e3047 30%,#4a5568 
   <div class="ctx-i" id="ctxResetIcons" onclick="resetPositions()">📐 Reset Icon Layout</div>
   <div class="ctx-s"></div>
   <div class="ctx-i" id="ctxOpenTrash" onclick="openTrash()">🗑️ Open Trash</div>
+  <div class="ctx-i" id="ctxEmptyTrash" onclick="emptyTrash()">🗑️ Empty Trash</div>
   <div class="ctx-i" id="ctxRefresh" onclick="location.reload()">🔄 Refresh</div>
 </div>
 
@@ -449,9 +452,11 @@ var I18N_DEFAULT={
   ui_trash_restore_all:'Restore All',
   ui_trash_empty_all:'Empty Trash',
   ui_iconctx_open:'📂 Open',
+  ui_iconctx_copy_path:'📋 Copy Path',
   ui_iconctx_delete:'🗑️ Delete',
   ui_folderctx_open:'📂 Open Folder',
   ui_folderctx_rename:'✏️ Rename',
+  ui_folderctx_copy_path:'📋 Copy Path',
   ui_folderctx_delete:'🗑️ Delete Folder',
   ui_ctx_new_folder:'📁 New Folder',
   ui_ctx_open_search:'🔍 Open Search',
@@ -464,6 +469,7 @@ var I18N_DEFAULT={
   ui_ctx_sort_created:'🗓️ 최근 생성순 정렬',
   ui_ctx_reset_icons:'📐 Reset Icon Layout',
   ui_ctx_open_trash:'🗑️ Open Trash',
+  ui_ctx_empty_trash:'🗑️ Empty Trash',
   ui_ctx_refresh:'🔄 Refresh',
   ui_action_open:'Open',
   ui_action_remove:'Remove',
@@ -479,6 +485,10 @@ var I18N_DEFAULT={
   msg_prompt_folder_name:'Enter folder name:',
   msg_confirm_restore_all:'Restore all {count} items?',
   msg_confirm_empty_trash:'Emptying trash permanently removes items from this dashboard.\nEmpty {count} items?',
+  msg_copy_path_success:'Path copied.',
+  msg_copy_path_missing:'No path available to copy.',
+  msg_copy_path_failed:'Copy failed. Please copy manually.',
+  msg_icon_scale_limited:'Icon size was limited to keep items visible on screen.',
   ui_load_warning:'Failed to load config. Run with a local static server or check the config path.',
   ui_filter_all:'전체',
   ui_filter_folder:'폴더',
@@ -561,6 +571,19 @@ function notifyLoadIssue(){
   if(!box)return;
   box.textContent=I18N.ui_load_warning;
   box.classList.add('on');
+}
+
+function flashLoadIssue(msg,isError){
+  var box=document.getElementById('loadIssue');
+  if(!box)return;
+  box.textContent=msg;
+  box.style.background=isError?'rgba(239,68,68,.92)':'rgba(37,99,235,.92)';
+  box.classList.add('on');
+  setTimeout(function(){
+    box.classList.remove('on');
+    box.style.background='';
+    box.textContent=I18N.ui_load_warning;
+  },1400);
 }
 
 function tr(key, vars){
@@ -846,12 +869,16 @@ function applyI18NText(){
   if(trashInfo)trashInfo.textContent=tr('ui_trash_count',{count:0});
   var iconCtxOpen=document.getElementById('iconCtxOpen');
   if(iconCtxOpen)iconCtxOpen.textContent=I18N.ui_iconctx_open;
+  var iconCtxCopyPath=document.getElementById('iconCtxCopyPath');
+  if(iconCtxCopyPath)iconCtxCopyPath.textContent=I18N.ui_iconctx_copy_path;
   var iconCtxDelete=document.getElementById('iconCtxDelete');
   if(iconCtxDelete)iconCtxDelete.textContent=I18N.ui_iconctx_delete;
   var folderCtxOpen=document.getElementById('folderCtxOpen');
   if(folderCtxOpen)folderCtxOpen.textContent=I18N.ui_folderctx_open;
   var folderCtxRename=document.getElementById('folderCtxRename');
   if(folderCtxRename)folderCtxRename.textContent=I18N.ui_folderctx_rename;
+  var folderCtxCopyPath=document.getElementById('folderCtxCopyPath');
+  if(folderCtxCopyPath)folderCtxCopyPath.textContent=I18N.ui_folderctx_copy_path||I18N.ui_iconctx_copy_path;
   var folderCtxDelete=document.getElementById('folderCtxDelete');
   if(folderCtxDelete)folderCtxDelete.textContent=I18N.ui_folderctx_delete;
   document.getElementById('ctxNewFolder').textContent=I18N.ui_ctx_new_folder;
@@ -865,6 +892,7 @@ function applyI18NText(){
   document.getElementById('ctxSortCreated').textContent=I18N.ui_ctx_sort_created;
   document.getElementById('ctxResetIcons').textContent=I18N.ui_ctx_reset_icons;
   document.getElementById('ctxOpenTrash').textContent=I18N.ui_ctx_open_trash;
+  document.getElementById('ctxEmptyTrash').textContent=I18N.ui_ctx_empty_trash;
   document.getElementById('ctxRefresh').textContent=I18N.ui_ctx_refresh;
   tips=I18N.tips||I18N_DEFAULT.tips;
   var tipTitle=document.querySelector('.mc-bub .tl');
@@ -883,7 +911,50 @@ function getIconScale(){
 function saveIconScale(v){
   storageSet(ICON_SCALE_KEY,String(v));
 }
+function getIconSizerBounds(){
+  var sizer=document.getElementById('iconSizer');
+  var minVal=sizer?parseFloat(sizer.min):0.6;
+  var maxVal=sizer?parseFloat(sizer.max):1.4;
+  if(isNaN(minVal))minVal=0.6;
+  if(isNaN(maxVal))maxVal=1.4;
+  return {min:minVal,max:maxVal};
+}
+function getDesktopItemCount(){
+  var iconCount=0;
+  allIcons.forEach(function(el){
+    if(el.style.display!=='none')iconCount++;
+  });
+  return iconCount+folderEls.length;
+}
+function calcCapacityForScale(scale){
+  var dt=document.getElementById('dt');
+  if(!dt)return 0;
+  var gridW=Math.round(BASE_GRID_W*scale);
+  var gridH=Math.round(BASE_GRID_H*scale);
+  var cols=Math.max(1,Math.floor((dt.offsetWidth-PAD_X)/gridW));
+  var rows=Math.max(1,Math.floor((dt.offsetHeight-PAD_Y)/gridH));
+  return cols*rows;
+}
+function getFittingScale(requestedScale){
+  var bounds=getIconSizerBounds();
+  var target=Math.max(bounds.min,Math.min(bounds.max,requestedScale||1));
+  var count=getDesktopItemCount();
+  if(!count)return target;
+  var step=0.05;
+  while(target>bounds.min&&calcCapacityForScale(target)<count){
+    target=Math.max(bounds.min,Math.round((target-step)*100)/100);
+  }
+  return target;
+}
 function applyIconScale(scale){
+  var requested=scale;
+  var fitted=getFittingScale(requested);
+  if(Math.abs(fitted-requested)>0.0001){
+    var sizer=document.getElementById('iconSizer');
+    if(sizer)sizer.value=String(fitted);
+    flashLoadIssue(tr('msg_icon_scale_limited'),false);
+  }
+  scale=fitted;
   // Update CSS custom properties via style
   var iconW=Math.round(52*scale);
   var iconH=Math.round(52*scale);
@@ -1055,8 +1126,8 @@ function sortIconsBy(mode){
 function calcGrid(){
   var dt=document.getElementById('dt');
   var dtW=dt.offsetWidth, dtH=dt.offsetHeight;
-  var cols=Math.floor((dtW - PAD_X)/(GRID_W));
-  var rows=Math.floor((dtH - PAD_Y)/(GRID_H));
+  var cols=Math.max(1,Math.floor((dtW - PAD_X)/(GRID_W)));
+  var rows=Math.max(1,Math.floor((dtH - PAD_Y)/(GRID_H)));
   return {cols:cols,rows:rows,dtW:dtW,dtH:dtH};
 }
 
@@ -1846,6 +1917,10 @@ function showFolderCtx(e,fEl){
   e.preventDefault();e.stopPropagation();
   folderCtxTarget=fEl;
   var ctx=document.getElementById('folderCtx');
+  var copyBtn=document.getElementById('folderCtxCopyPath');
+  var hasPath=!!getElementPathForCopy(fEl);
+  // Dashboard virtual folders do not have real filesystem paths.
+  if(copyBtn)copyBtn.style.display=hasPath?'flex':'none';
   ctx.style.left=Math.min(e.clientX,innerWidth-160)+'px';
   ctx.style.top=Math.min(e.clientY,innerHeight-120)+'px';
   ctx.classList.add('on');
@@ -1870,6 +1945,21 @@ document.getElementById('folderCtxRename').addEventListener('click',function(){
     saveFolders(folders);
     updateFolderLabel(fid,f.name);
   }
+  hideFolderCtx();
+});
+document.getElementById('folderCtxCopyPath').addEventListener('click',function(){
+  if(!folderCtxTarget)return;
+  var p=getElementPathForCopy(folderCtxTarget);
+  if(!p){
+    flashLoadIssue(tr('msg_copy_path_missing'),true);
+    hideFolderCtx();
+    return;
+  }
+  copyTextToClipboard(p).then(function(){
+    flashLoadIssue(tr('msg_copy_path_success'),false);
+  }).catch(function(){
+    flashLoadIssue(tr('msg_copy_path_failed'),true);
+  });
   hideFolderCtx();
 });
 document.getElementById('folderCtxDelete').addEventListener('click',function(){
@@ -2166,18 +2256,74 @@ function showIconCtx(e,iconEl){
   e.preventDefault();e.stopPropagation();
   iconCtxTarget=iconEl;
   var ctx=document.getElementById('iconCtx');
-  ctx.style.left=Math.min(e.clientX,innerWidth-160)+'px';
-  ctx.style.top=Math.min(e.clientY,innerHeight-80)+'px';
+  ctx.style.left=Math.min(e.clientX,innerWidth-190)+'px';
+  ctx.style.top=Math.min(e.clientY,innerHeight-120)+'px';
   ctx.classList.add('on');
 }
 function hideIconCtx(){
   document.getElementById('iconCtx').classList.remove('on');
   iconCtxTarget=null;
 }
+function copyTextToClipboard(text){
+  if(!text)return Promise.reject(new Error('empty'));
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(text);
+  }
+  return new Promise(function(resolve,reject){
+    try{
+      var ta=document.createElement('textarea');
+      ta.value=text;
+      ta.setAttribute('readonly','readonly');
+      ta.style.position='fixed';
+      ta.style.opacity='0';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0,ta.value.length);
+      var ok=document.execCommand('copy');
+      document.body.removeChild(ta);
+      if(ok)resolve(); else reject(new Error('copy-failed'));
+    }catch(err){
+      reject(err);
+    }
+  });
+}
+function getElementPathForCopy(el){
+  if(!el)return '';
+  var p=String((el.dataset&&el.dataset.pathraw)||'').trim();
+  if(p)return p;
+  var href=String(el.getAttribute('href')||'').trim();
+  if(!href||href==='#')return '';
+  if(href.indexOf('/open?path=')===0){
+    try{
+      var q=href.split('?')[1]||'';
+      var ps=new URLSearchParams(q);
+      return ps.get('path')||'';
+    }catch(err){
+      return '';
+    }
+  }
+  return href;
+}
+function copyPathFromIconContext(){
+  if(!iconCtxTarget)return;
+  var p=getElementPathForCopy(iconCtxTarget);
+  if(!p){
+    flashLoadIssue(tr('msg_copy_path_missing'),true);
+    hideIconCtx();
+    return;
+  }
+  copyTextToClipboard(p).then(function(){
+    flashLoadIssue(tr('msg_copy_path_success'),false);
+  }).catch(function(){
+    flashLoadIssue(tr('msg_copy_path_failed'),true);
+  });
+  hideIconCtx();
+}
 document.getElementById('iconCtxOpen').addEventListener('click',function(){
   if(iconCtxTarget&&iconCtxTarget.href)window.location.href=iconCtxTarget.href;
   hideIconCtx();
 });
+document.getElementById('iconCtxCopyPath').addEventListener('click',copyPathFromIconContext);
 document.getElementById('iconCtxDelete').addEventListener('click',function(){
   if(!iconCtxTarget)return;
   var idx=parseInt(iconCtxTarget.dataset.idx);
